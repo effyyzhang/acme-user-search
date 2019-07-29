@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://fonts.googleapis.com/css?family=Inconsolata:400,700&display=swap" rel="stylesheet">
+    <title>User Search</title>
+    <style>
+        body{
+            font-family: 'Inconsolata', monospace;
+            color:#2E00AD;
+            padding: 0;
+            margin: 0;
+            }
+        
+        header{
+            background-color: #D0ECF4;
+            padding: 2rem;
+        }
+
+        header input{
+            font-family: 'Inconsolata', monospace;
+        }
+        
+        h1{
+            font-weight: 700;
+        }
+
+        #search-field{
+            width: 100%;
+            height: 3rem;
+            /* border: 1px solid #D0ECF4; */
+            background-color: #fff;
+            border-radius: 1.5rem;
+            align-items: center;
+            display: flex;
+            outline: none;
+            border: 1px solid #fff;
+        }
+        
+        #search-field:hover{
+            border: 1px solid #000A6B;
+        }
+    
+        #search-term{
+            flex-grow: 1;
+            font-size: 1rem;
+            margin-left: 1rem;
+            border: none;
+        }
+
+        #search-term:focus{
+            /* border: 1px solid #000A6B; */
+            font-weight: 700;
+            outline: none;
+        }
+
+        #clear-button{
+            width: 24px;
+            height: 24px;
+            fill: #2E00AD;
+            padding: 0 1rem;
+        }
+
+        .list{
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 0;
+        }
+        .user{
+            display: flex;
+            padding: 1rem 2rem;
+            align-items: center; 
+        }
+        .user-image{
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            margin-right: 1rem;
+        }
+        .first-name{
+            width: 80px;
+            margin-right: 1rem;
+        }
+        .last-name{
+            width: 120px;
+            margin-right: 1rem;
+        }
+        .contact{
+            width: 360px;
+            margin-right: 1rem;
+        }
+        .title{
+            width: 320px;
+        }
+        #pagination{
+            position: fixed;
+            bottom: 0;
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            height: 3rem;
+            font-weight: 700;
+            align-items: center;
+            margin-bottom: 2rem;
+        } 
+
+        #pagination div {
+            width: 5rem;
+            text-align: center;
+        }
+        .disable{
+            opacity: 0.5;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+            <h1>Acme User Search</h1>
+            <div id="search-field">
+                <input type='text' id="search-term" placeholder="Search..." size="30"></input>
+                <div id="clear-button"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/><path d="M0 0h24v24H0z" fill="none"/></svg></div>
+            </div>
+    </header>
+    <div class="list"></div>
+    <footer id="pagination">
+        <div id="pre-page" class='disable'>Pre</div>
+        <div id="current-page">1</div>
+        <div id="next-page">Next</div>
+    </footer>
+    <script>
+        const API = 'https://acme-users-api-rev.herokuapp.com/api/users';
+        const list = document.querySelector('.list');
+        const searchTerm = document.querySelector('#search-term');
+        const clearButton = document.querySelector('#clear-button');
+        const prePageButton = document.querySelector('#pre-page');
+        const currentPage = document.querySelector('#current-page');
+        const nextPageButton = document.querySelector('#next-page');
+        let currentPageNumber= 1;
+        
+        // prePageButton.addEventListener('click', e => {
+        //     if (currentPage > 1){
+        //         currentPage--;
+        //         if(currentPage === 1){
+        //             prePageButton.class = 'disable';
+        //         }
+        // });
+        
+        // nextPageButton.addEventListener('click', e => {
+
+        // })
+
+
+        const loadUsers = (API) => {
+            fetch(API)
+            .then( response => response.json())
+            .then( data => {
+                const html = [];
+                (data.users).map( user => {     
+                    const row  = `<div class='user'>
+                                    <image class='user-image' src='${user.avatar}'></image>
+                                    <div class='first-name'>${user.firstName}</div>
+                                    <div class='last-name'>${user.lastName}</div>
+                                    <div class='contact'>${user.email}</div>
+                                    <div class='title'>${user.title}</div>
+                                </div>`
+                    html.push(row);
+                })
+                list.innerHTML = html.join('');
+            })
+        };
+        
+
+        // hashchange
+        window.onload = () => {
+            const hash = window.location.hash.slice(1);
+            if(hash){
+                searchTerm.value = hash[0].split('/')[0];
+                const newAPI = `${API}/search/${hash}`;
+                loadUsers(newAPI);
+            }
+        }
+
+        window.addEventListener('hashchange', ev => {
+                const hash = window.location.hash.slice(1);
+                if(hash){
+                searchTerm.value = hash[0].split('/')[0];
+                const newAPI = `${API}/search/${hash}`;
+                loadUsers(newAPI);
+            }
+        })
+
+        searchTerm.addEventListener('change', (e) => {
+            const newAPI = `${API}/search/${searchTerm.value}`;
+            window.location = `#${searchTerm.value}`
+            loadUsers(newAPI);
+        });
+
+        clearButton.addEventListener('click', (e) => {
+            searchTerm.value = '';
+            window.location = '';
+            list.innerHTML = '';
+        });
+    </script>   
+</body>
+</html>
