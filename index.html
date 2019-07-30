@@ -13,7 +13,7 @@
             padding: 0;
             margin: 0;
             }
-        
+
         header{
             background-color: #D0ECF4;
             padding: 2rem;
@@ -22,7 +22,7 @@
         header input{
             font-family: 'Inconsolata', monospace;
         }
-        
+
         h1{
             font-weight: 700;
         }
@@ -38,11 +38,11 @@
             outline: none;
             border: 1px solid #fff;
         }
-        
+
         #search-field:hover{
             border: 1px solid #000A6B;
         }
-    
+
         #search-term{
             flex-grow: 1;
             font-size: 1rem;
@@ -71,8 +71,15 @@
         .user{
             display: flex;
             padding: 1rem 2rem;
-            align-items: center; 
+            align-items: center;
+            background-color: #fff;
         }
+
+        .user:hover {
+            background-color: ghostwhite;
+        }
+
+
         .user-image{
             width: 3rem;
             height: 3rem;
@@ -103,17 +110,28 @@
             height: 3rem;
             font-weight: 700;
             align-items: center;
-            margin-bottom: 2rem;
-        } 
+            padding: 1rem 0;
+            background-color: #fff;
+        }
 
-        #pagination div {
+
+        #pagination button{
             width: 5rem;
+            font-family: inherit;
+            font-size: 1rem;
+            color: inherit;
             text-align: center;
-        }
-        .disable{
-            opacity: 0.5;
+            font-weight: 700;
         }
 
+        #pagination button:disabled{
+            color: lightblue;
+        }
+
+
+        .disabled{
+            color: lightgrey;
+        }
     </style>
 </head>
 <body>
@@ -126,9 +144,9 @@
     </header>
     <div class="list"></div>
     <footer id="pagination">
-        <div id="pre-page" class='disable'>Pre</div>
+        <button id="pre-page">Pre</button>
         <div id="current-page">1</div>
-        <div id="next-page">Next</div>
+        <button id="next-page" >Next</button>
     </footer>
     <script>
         const API = 'https://acme-users-api-rev.herokuapp.com/api/users';
@@ -139,18 +157,7 @@
         const currentPage = document.querySelector('#current-page');
         const nextPageButton = document.querySelector('#next-page');
         let currentPageNumber= 1;
-        
-        // prePageButton.addEventListener('click', e => {
-        //     if (currentPage > 1){
-        //         currentPage--;
-        //         if(currentPage === 1){
-        //             prePageButton.class = 'disable';
-        //         }
-        // });
-        
-        // nextPageButton.addEventListener('click', e => {
-
-        // })
+        let maxPageNumber=1;
 
 
         const loadUsers = (API) => {
@@ -158,39 +165,72 @@
             .then( response => response.json())
             .then( data => {
                 const html = [];
-                (data.users).map( user => {     
-                    const row  = `<div class='user'>
+                maxPageNumber = Math.ceil(data.count/50)-1;
+                (data.users).map( user => {
+                    const row  = `<a class='user' herf = '#'>
                                     <image class='user-image' src='${user.avatar}'></image>
                                     <div class='first-name'>${user.firstName}</div>
                                     <div class='last-name'>${user.lastName}</div>
                                     <div class='contact'>${user.email}</div>
                                     <div class='title'>${user.title}</div>
-                                </div>`
+                                </a>`
                     html.push(row);
                 })
                 list.innerHTML = html.join('');
             })
         };
-        
+
+        nextPageButton.addEventListener('click', ev => {
+                if(currentPageNumber < maxPageNumber){
+                    currentPageNumber++;
+                window.location.hash = window.location.hash.split('/')[0]+'/'+ currentPageNumber;
+                }
+            });
+
+        prePageButton.addEventListener('click', ev => {
+            if(currentPageNumber>1){
+                currentPageNumber--;
+                window.location.hash = window.location.hash.split('/')[0]+'/'+ currentPageNumber;
+                }
+            });
+
 
         // hashchange
         window.onload = () => {
             const hash = window.location.hash.slice(1);
             if(hash){
-                searchTerm.value = hash[0].split('/')[0];
-                const newAPI = `${API}/search/${hash}`;
-                loadUsers(newAPI);
+                //update search field
+                searchTerm.value = hash.split('/')[0];
+                // update page number
+                if(hash.split('/')[1]){
+                    currentPageNumber = hash.split('/')[1];
+                }else{
+                    currentPageNumber = 1;
+                }
+                currentPage.innerHTML = `${currentPageNumber}`;
+                // update user list
+                loadUsers(`${API}/search/${hash}`);
+                currentPageNumber = 1? prePageButton.disabled=true : prePageButton.disabled = false;
             }
         }
 
         window.addEventListener('hashchange', ev => {
-                const hash = window.location.hash.slice(1);
-                if(hash){
-                searchTerm.value = hash[0].split('/')[0];
-                const newAPI = `${API}/search/${hash}`;
-                loadUsers(newAPI);
+            const hash = window.location.hash.slice(1);
+            if(hash){
+                //update search field
+                searchTerm.value = hash.split('/')[0];
+                // update page number
+                if(hash.split('/')[1]){
+                    currentPageNumber = hash.split('/')[1];
+                }else{
+                    currentPageNumber = 1;
+                }
+                currentPage.innerHTML = `${currentPageNumber}`;
+                // update user list
+                loadUsers(`${API}/search/${hash}`);
+                currentPageNumber = 1? prePageButton.disabled=true : prePageButton.disabled = false;
             }
-        })
+        });
 
         searchTerm.addEventListener('change', (e) => {
             const newAPI = `${API}/search/${searchTerm.value}`;
@@ -203,6 +243,6 @@
             window.location = '';
             list.innerHTML = '';
         });
-    </script>   
+    </script>
 </body>
 </html>
